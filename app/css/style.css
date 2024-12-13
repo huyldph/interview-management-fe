@@ -1,0 +1,19 @@
+Table tbody tr:nth-child(even) {
+    background-color: #f3f4f6;
+}
+
+Table tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+Table tbody tr:hover {
+    background-color: #d6d7db;
+}
+
+Table thead{
+    background-color: rgba(216, 209, 209, 0.1);
+    font-weight: 900;
+    font-size: 20px;
+    font-family: 'Times New Roman', Times, serif;
+    color: black;
+}
