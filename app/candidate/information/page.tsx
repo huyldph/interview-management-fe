@@ -104,7 +104,7 @@ export default function CandidateInformation() {
 
                 <div className="flex justify-center gap-10 pt-4">
                     <Button type="button" className="w-24"
-                            onClick={() => router.push(`/candidate/edit/${candidate.candidateId}`)}>Edit</Button>
+                            onClick={() => router.push(`/candidate/edit?id=${candidate?.candidateId}`)}>Edit</Button>
                     <Button
                         type="button"
                         className="w-24"

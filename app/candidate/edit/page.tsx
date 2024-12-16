@@ -1,8 +1,7 @@
 'use client'
 
 import React, {useEffect, useState} from 'react'
-import {useRouter} from 'next/navigation'
-import {Button} from "@/components/ui/button"
+import {useRouter, useSearchParams} from 'next/navigation'
 import {Input} from "@/components/ui/input"
 import {Label} from "@/components/ui/label"
 import {
@@ -17,6 +16,7 @@ import {Autocomplete, TextField} from "@mui/material";
 import {format} from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import {Button} from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 
@@ -62,12 +62,14 @@ interface Candidate {
     highestEducation: string;
 }
 
-export default function CreateCandidate() {
+export default function UpdateCandidate() {
     const router = useRouter()
     const [multiple, setMultiple] = useState([]);
     const [fileName, setFileName] = useState("");
     const [users, setUsers] = useState<User[]>([]);
+    const searchParams = useSearchParams()
     const [startDate, setStartDate] = useState(new Date());
+    const id = searchParams.get('id')
     const [formData, setFormData] = useState<Candidate>({
         fullName: '',
         email: '',
@@ -96,9 +98,51 @@ export default function CreateCandidate() {
         setUsers(data.content)
     };
 
+    const fetchCandidateData = async (candidateId: string) => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/candidates/${candidateId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch candidate data');
+            }
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching candidate data:', error);
+            return null;
+        }
+    };
+
     useEffect(() => {
-        fetchCandidates().then(r => console.log(r))
-    }, [])
+        const loadData = async () => {
+            if (id) {
+                const candidateData = await fetchCandidateData(id);
+                if (candidateData) {
+                    setFormData({
+                        fullName: candidateData.fullName || '',
+                        email: candidateData.email || '',
+                        address: candidateData.address || '',
+                        phoneNumber: candidateData.phoneNumber || '',
+                        gender: candidateData.gender || '',
+                        dob: candidateData.dob ? new Date(candidateData.dob) : new Date(),
+                        cvFilePath: candidateData.cvFilePath || '',
+                        note: candidateData.note || '',
+                        currentPosition: candidateData.currentPosition || '',
+                        status: candidateData.status || '',
+                        skills: candidateData.skills || [],
+                        yearsOfExperience: candidateData.yearsOfExperience || 0,
+                        userId: candidateData.userId || 0,
+                        highestEducation: candidateData.highestEducation || ''
+                    });
+                    setStartDate(candidateData.dob ? new Date(candidateData.dob) : new Date());
+                    setMultiple(candidateData.skills || []);
+                    setFileName(candidateData.cvFilePath ? candidateData.cvFilePath.split('/').pop() : '');
+                }
+            }
+            await fetchCandidates();
+        };
+
+        loadData();
+    }, [id]);
 
     //upload file
     const handleFileUpload = async (file: File) => {
@@ -157,7 +201,7 @@ export default function CreateCandidate() {
     const handleSelectChange = (name: string, value: string) => {
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: name === 'userId' ? Number(value) : value
         }));
     };
 
@@ -174,32 +218,35 @@ export default function CreateCandidate() {
         e.preventDefault();
 
         try {
-            const response = await fetch('http://localhost:8080/api/candidates', {
-                method: 'POST',
+            const candidateData = {
+                ...formData,
+                skills: multiple, // Send the skills array directly, not as a JSON string
+                dob: formData.dob ? format(formData.dob, "yyyy-MM-dd") : null,
+            };
+
+            const response = await fetch(`http://localhost:8080/api/candidates/update/${id}`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    ...formData,
-                    dob: formData.dob ? format(formData.dob, "yyyy-MM-dd") : null,
-                    skills: multiple,
-                }),
+                body: JSON.stringify(candidateData),
             });
 
             if (response.ok) {
                 toast({
                     title: "Success",
-                    description: "Candidate created successfully!",
+                    description: "Candidate updated successfully!",
                     duration: 3000,
                 });
             } else {
-                throw new Error('Failed to create candidate');
+                const errorData = await response.text();
+                throw new Error(errorData);
             }
         } catch (error) {
-            console.error('Error creating candidate:', error);
+            console.error('Error updating candidate:', error);
             toast({
                 title: "Error",
-                description: "Failed to create candidate. Please try again.",
+                description: "Failed to update candidate. Please try again.",
                 variant: "destructive",
                 duration: 3000,
             });
@@ -269,7 +316,8 @@ export default function CreateCandidate() {
                             <Label htmlFor="gender">
                                 Gender <span className="text-red-500">*</span>
                             </Label>
-                            <Select defaultValue="male" onValueChange={(value) => handleSelectChange("gender", value)}>
+                            <Select value={formData.gender}
+                                    onValueChange={(value) => handleSelectChange("gender", value)}>
                                 <SelectTrigger className="bg-white">
                                     <SelectValue placeholder="Select a gender"/>
                                 </SelectTrigger>
@@ -322,7 +370,9 @@ export default function CreateCandidate() {
                             <Label htmlFor="position">
                                 Position <span className="text-red-500">*</span>
                             </Label>
-                            <Select onValueChange={(value) => handleSelectChange("currentPosition", value)}>
+                            <Select
+                                value={formData.currentPosition}
+                                onValueChange={(value) => handleSelectChange("currentPosition", value)}>
                                 <SelectTrigger className="bg-white">
                                     <SelectValue placeholder="Select a position... ex. Backend developer, ..."/>
                                 </SelectTrigger>
@@ -339,7 +389,8 @@ export default function CreateCandidate() {
                             <Label htmlFor="status">
                                 Status <span className="text-red-500">*</span>
                             </Label>
-                            <Select onValueChange={(value) => handleSelectChange("status", value)}>
+                            <Select value={formData.status}
+                                    onValueChange={(value) => handleSelectChange("status", value)}>
                                 <SelectTrigger className="bg-white">
                                     <SelectValue placeholder="Select a status"/>
                                 </SelectTrigger>
@@ -392,7 +443,8 @@ export default function CreateCandidate() {
                             <Label htmlFor="recruiter">
                                 Recruiter <span className="text-red-500">*</span>
                             </Label>
-                            <Select onValueChange={(value) => handleSelectChange("userId", value)}>
+                            <Select value={String(formData.userId)}
+                                    onValueChange={(value) => handleSelectChange("userId", value)}>
                                 <SelectTrigger className="bg-white">
                                     <SelectValue placeholder="Recruiter name"/>
                                 </SelectTrigger>
@@ -411,7 +463,8 @@ export default function CreateCandidate() {
                             <Label htmlFor="education">
                                 Highest level <span className="text-red-500">*</span>
                             </Label>
-                            <Select onValueChange={(value) => handleSelectChange("highestEducation", value)}>
+                            <Select value={formData.highestEducation}
+                                    onValueChange={(value) => handleSelectChange("highestEducation", value)}>
                                 <SelectTrigger className="bg-white">
                                     <SelectValue placeholder="Select highest level..."/>
                                 </SelectTrigger>
@@ -427,11 +480,9 @@ export default function CreateCandidate() {
                 </div>
 
                 <div className="flex justify-center gap-4 pt-4">
-                    <Button type="submit" className="w-24">Submit</Button>
+                    <Button type="submit">Submit</Button>
                     <Button
                         type="button"
-                        variant="outline"
-                        className="w-24"
                         onClick={() => router.push('/candidate')}
                     >
                         Cancel

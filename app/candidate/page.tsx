@@ -76,6 +76,32 @@ export default function Page() {
         router.push(`/candidate/information?id=${id}`)
     }
 
+    const handleShowUpdate = (id: number) => {
+        router.push(`/candidate/edit?id=${id}`)
+    }
+
+    const handleDelete = async (id) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const confirmed = confirm('Are you sure you want to delete this candidate?');
+            if (!confirmed) return;
+            await fetch(`http://localhost:8080/api/candidates/${id}`, {
+                method: 'DELETE',
+            });
+            await fetchCandidates();
+            // Kiểm tra nếu trang hiện tại vượt quá tổng số trang sau khi xóa
+            if (candidates.length === 1 && page > 0) {
+                setPage((prevPage) => prevPage - 1); // Giảm trang nếu còn trang nhưng không có ứng viên
+            }
+        } catch (err) {
+            setError('Failed to delete products');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) {
         return <div className="flex justify-center items-center h-64">Loading...</div>
     }
@@ -157,7 +183,8 @@ export default function Page() {
                                         </svg>
                                     </Button>
 
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8"
+                                            onClick={() => handleShowUpdate(candidate.candidateId)}>
                                         <svg
                                             className=" h-4 w-4"
                                             fill="none"
@@ -173,7 +200,8 @@ export default function Page() {
                                             <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
                                         </svg>
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8"
+                                            onClick={() => handleDelete(candidate.candidateId)}>
                                         <svg
                                             className=" h-4 w-4"
                                             fill="none"

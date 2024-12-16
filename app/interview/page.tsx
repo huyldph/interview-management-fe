@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/table";
 import {Input} from "@/components/ui/input";
 import Link from 'next/link';
+import {useRouter} from 'next/navigation';
+import {useToast} from "@/hooks/use-toast"
+import {Toaster} from "@/components/ui/toaster"
 
 interface Interview {
     interviewId: number;
@@ -39,6 +42,9 @@ export default function Page() {
     const [totalPages, setTotalPages] = useState(0);
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const router = useRouter();
+
+    const {toast} = useToast()
 
     useEffect(() => {
         fetchJobs().then(r => console.log(r))
@@ -70,6 +76,44 @@ export default function Page() {
     const handleNextPage = () => {
         setPage((prevPage) => prevPage + 1)
     }
+
+    const handleShowIntervew = (id: number) => {
+        router.push(`/interview/details?id=${id}`)
+    }
+
+    const handleShowUpdate = (id: number) => {
+        router.push(`/interview/edit?id=${id}`)
+    }
+
+    const handleDelete = async (id) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const confirmed = confirm('Are you sure you want to delete this interview?');
+            if (!confirmed) return;
+            await fetch(`http://localhost:8080/api/interviews/${id}`, {
+                method: 'DELETE',
+            });
+
+            await fetchJobs();
+            toast({
+                title: "Success",
+                description: "Interview deleted successfully!",
+                duration: 3000,
+            });
+        } catch (err) {
+            setError('Failed to delete products');
+            toast({
+                title: "Error",
+                description: "Failed to delete interview. Please try again.",
+                variant: "destructive",
+                duration: 3000
+            });
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (loading) {
         return <div className="flex justify-center items-center h-64">Loading...</div>
@@ -104,7 +148,7 @@ export default function Page() {
                 </Select>
                 <Button className="bg-primary text-primary-foreground">Search</Button>
                 <div className="flex-1"/>
-                <Link href="/user/create" passHref>
+                <Link href="/interview/create" passHref>
                     <Button className="bg-primary text-primary-foreground">Add new</Button>
                 </Link>
             </div>
@@ -131,12 +175,13 @@ export default function Page() {
                                 <TableCell>{interview.candidateName}</TableCell>
                                 <TableCell>{interview.interviewer}</TableCell>
                                 <TableCell>{interview.scheduleStart}</TableCell>
-                                <TableCell>{interview.result== null ? 'N/A' :interview.result}</TableCell>
+                                <TableCell>{interview.result == null ? 'N/A' : interview.result}</TableCell>
                                 <TableCell>{interview.status}</TableCell>
                                 <TableCell>{interview.jobTitle}</TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <svg
+                                    <Button variant="ghost" size="icon" className="h-8 w-8"
+                                            onClick={() => handleShowIntervew(interview.interviewId)}>
+                                        < svg
                                             className=" h-4 w-4"
                                             fill="none"
                                             height="24"
@@ -152,7 +197,9 @@ export default function Page() {
                                             <circle cx="12" cy="12" r="3"/>
                                         </svg>
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+
+                                    <Button variant="ghost" size="icon" className="h-8 w-8"
+                                            onClick={() => handleShowUpdate(interview.interviewId)}>
                                         <svg
                                             className=" h-4 w-4"
                                             fill="none"
@@ -166,6 +213,25 @@ export default function Page() {
                                             xmlns="http://www.w3.org/2000/svg"
                                         >
                                             <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                                        </svg>
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8"
+                                            onClick={() => handleDelete(interview.interviewId)}>
+                                        <svg
+                                            className=" h-4 w-4"
+                                            fill="none"
+                                            height="24"
+                                            stroke="currentColor"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            viewBox="0 0 24 24"
+                                            width="24"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <path d="M3 6h18"/>
+                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
                                         </svg>
                                     </Button>
                                 </TableCell>
@@ -221,6 +287,7 @@ export default function Page() {
                     </Button>
                 </div>
             </div>
+            <Toaster/>
         </div>
     );
 

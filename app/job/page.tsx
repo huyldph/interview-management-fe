@@ -1,12 +1,27 @@
-'use client'
+'use client';
 
-import {useEffect, useState} from "react";
-import {Search} from "lucide-react";
-import {Input} from "@/components/ui/input";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import '../css/style.css'
+import {Search} from 'lucide-react';
 import {Button} from "@/components/ui/button";
-import Link from "next/link";
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {useEffect, useState} from "react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import {Input} from "@/components/ui/input";
+import Link from 'next/link';
+import {useRouter} from 'next/navigation';
 
 interface Job {
     jobId: number;
@@ -14,7 +29,7 @@ interface Job {
     requiredSkills: string;
     startDate: string;
     endDate: string;
-    level: number;
+    level: string;
     status: string;
 }
 
@@ -24,6 +39,7 @@ export default function Page() {
     const [totalPages, setTotalPages] = useState(0);
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const router = useRouter();
 
     useEffect(() => {
         fetchJobs().then(r => console.log(r))
@@ -35,13 +51,13 @@ export default function Page() {
         try {
             const response = await fetch(`http://localhost:8080/api/jobs?page=${page}`)
             if (!response.ok) {
-                throw new Error('Failed to fetch jobs')
+                throw new Error('Failed to fetch users')
             }
             const data = await response.json()
             setJobs(data.content)
             setTotalPages(data.totalPages)
         } catch (err) {
-            setError("An error occurred while fetching jobs")
+            setError("An error occurred while fetching users")
             console.error(err)
         } finally {
             setLoading(false)
@@ -56,6 +72,33 @@ export default function Page() {
         setPage((prevPage) => prevPage + 1)
     }
 
+    const handleShowJob = (id: number) => {
+        router.push(`/job/details?id=${id}`)
+    }
+
+    const handleShowUpdate = (id: number) => {
+        router.push(`/job/edit?id=${id}`)
+    }
+
+    const handleDelete = async (id) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const confirmed = confirm('Are you sure you want to delete this job?');
+            if (!confirmed) return;
+            await fetch(`http://localhost:8080/api/jobs/${id}`, {
+                method: 'DELETE',
+            });
+
+            await fetchJobs();
+        } catch (err) {
+            setError('Failed to delete products');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) {
         return <div className="flex justify-center items-center h-64">Loading...</div>
     }
@@ -63,7 +106,6 @@ export default function Page() {
     if (error) {
         return <div className="text-red-500 text-center">{error}</div>
     }
-
     return (
         <div className="container mx-auto p-4">
             {/* Search and Filter */}
@@ -89,7 +131,7 @@ export default function Page() {
                 </Select>
                 <Button className="bg-primary text-primary-foreground">Search</Button>
                 <div className="flex-1"/>
-                <Link href="/user/create" passHref>
+                <Link href="/job/create" passHref>
                     <Button className="bg-primary text-primary-foreground">Add new</Button>
                 </Link>
             </div>
@@ -118,8 +160,9 @@ export default function Page() {
                                 <TableCell>{job.level}</TableCell>
                                 <TableCell>{job.status}</TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <svg
+                                    <Button variant="ghost" size="icon" className="h-8 w-8"
+                                            onClick={() => handleShowJob(job.jobId)}>
+                                        < svg
                                             className=" h-4 w-4"
                                             fill="none"
                                             height="24"
@@ -135,7 +178,9 @@ export default function Page() {
                                             <circle cx="12" cy="12" r="3"/>
                                         </svg>
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+
+                                    <Button variant="ghost" size="icon" className="h-8 w-8"
+                                            onClick={() => handleShowUpdate(job.jobId)}>
                                         <svg
                                             className=" h-4 w-4"
                                             fill="none"
@@ -149,6 +194,25 @@ export default function Page() {
                                             xmlns="http://www.w3.org/2000/svg"
                                         >
                                             <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                                        </svg>
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8"
+                                            onClick={() => handleDelete(job.jobId)}>
+                                        <svg
+                                            className=" h-4 w-4"
+                                            fill="none"
+                                            height="24"
+                                            stroke="currentColor"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            viewBox="0 0 24 24"
+                                            width="24"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <path d="M3 6h18"/>
+                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
                                         </svg>
                                     </Button>
                                 </TableCell>
@@ -206,5 +270,5 @@ export default function Page() {
             </div>
         </div>
     );
-
 }
+

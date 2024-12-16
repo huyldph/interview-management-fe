@@ -27,13 +27,17 @@ export function MainNav() {
             <nav className="flex flex-col flex-grow">
                 {navItems.map((item) => {
                     const Icon = item.icon
+                    const isActive =
+                        item.href === "/"
+                            ? pathname === "/"
+                            : pathname.startsWith(item.href)
                     return (
                         <Link
                             key={item.href}
                             href={item.href}
                             className={cn(
                                 "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ease-in-out",
-                                pathname === item.href
+                                isActive
                                     ? "bg-black text-white"
                                     : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                             )}
