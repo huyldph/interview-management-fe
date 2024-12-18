@@ -89,7 +89,7 @@ export default function UpdateCandidate() {
 
     const { toast } = useToast()
 
-    const fetchCandidates = async () => {
+    const fetchUsers = async () => {
         const response = await fetch(`http://localhost:8080/api/users`)
         if (!response.ok) {
             throw new Error('Failed to fetch users')
@@ -114,6 +114,7 @@ export default function UpdateCandidate() {
 
     useEffect(() => {
         const loadData = async () => {
+            await fetchUsers();
             if (id) {
                 const candidateData = await fetchCandidateData(id);
                 if (candidateData) {
@@ -138,7 +139,6 @@ export default function UpdateCandidate() {
                     setFileName(candidateData.cvFilePath ? candidateData.cvFilePath.split('/').pop() : '');
                 }
             }
-            await fetchCandidates();
         };
 
         loadData();
@@ -322,8 +322,8 @@ export default function UpdateCandidate() {
                                     <SelectValue placeholder="Select a gender"/>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="male">Male</SelectItem>
-                                    <SelectItem value="female">Female</SelectItem>
+                                    <SelectItem value="Male">Male</SelectItem>
+                                    <SelectItem value="Female">Female</SelectItem>
                                     <SelectItem value="other">Other</SelectItem>
                                 </SelectContent>
                             </Select>

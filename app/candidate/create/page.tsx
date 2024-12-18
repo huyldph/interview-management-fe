@@ -87,7 +87,7 @@ export default function CreateCandidate() {
 
     const { toast } = useToast()
 
-    const fetchCandidates = async () => {
+    const fetchUsers = async () => {
         const response = await fetch(`http://localhost:8080/api/users`)
         if (!response.ok) {
             throw new Error('Failed to fetch users')
@@ -97,7 +97,7 @@ export default function CreateCandidate() {
     };
 
     useEffect(() => {
-        fetchCandidates().then(r => console.log(r))
+        fetchUsers().then(r => console.log(r))
     }, [])
 
     //upload file

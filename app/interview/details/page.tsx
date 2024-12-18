@@ -288,7 +288,8 @@ export default function DetailsInterview() {
                 </div>
 
                 <div className="flex justify-center gap-4 pt-4">
-                    <Button type="submit" className="w-24">Submit</Button>
+                    <Button type="button" className="w-24"
+                            onClick={() => router.push(`/interview/edit?id=${formData?.interviewId}`)}>Edit</Button>
                     <Button
                         type="button"
                         className="w-24"

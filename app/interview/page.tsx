@@ -43,7 +43,6 @@ export default function Page() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const router = useRouter();
-
     const {toast} = useToast()
 
     useEffect(() => {
@@ -101,6 +100,10 @@ export default function Page() {
                 description: "Interview deleted successfully!",
                 duration: 3000,
             });
+
+            if (interviews.length === 1 && page > 0) {
+                setPage((prevPage) => prevPage - 1); // Giảm trang nếu còn trang nhưng không có ứng viên
+            }
         } catch (err) {
             setError('Failed to delete products');
             toast({

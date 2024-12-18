@@ -22,6 +22,8 @@ import {
 import {Input} from "@/components/ui/input";
 import Link from 'next/link';
 import {useRouter} from 'next/navigation';
+import {useToast} from "@/hooks/use-toast"
+import {Toaster} from "@/components/ui/toaster"
 
 interface Candidate {
     candidateId: number;
@@ -40,6 +42,7 @@ export default function Page() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const router = useRouter();
+    const {toast} = useToast()
 
     useEffect(() => {
         fetchCandidates().then(r => console.log(r))
@@ -89,6 +92,11 @@ export default function Page() {
             await fetch(`http://localhost:8080/api/candidates/${id}`, {
                 method: 'DELETE',
             });
+            toast({
+                title: "Success",
+                description: "Candidate deleted successfully.",
+                duration: 3000,
+            });
             await fetchCandidates();
             // Kiểm tra nếu trang hiện tại vượt quá tổng số trang sau khi xóa
             if (candidates.length === 1 && page > 0) {
@@ -96,6 +104,12 @@ export default function Page() {
             }
         } catch (err) {
             setError('Failed to delete products');
+            toast({
+                title: "Error",
+                description: "Failed to delete candidate.",
+                variant: "destructive",
+                duration: 3000
+            });
             console.error(err);
         } finally {
             setLoading(false);
@@ -272,8 +286,8 @@ export default function Page() {
                     </Button>
                 </div>
             </div>
+            <Toaster/>
         </div>
-    )
-        ;
+    );
 }
 
